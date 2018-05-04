@@ -4,7 +4,9 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -18,10 +20,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class ScrollingActivity extends AppCompatActivity {
 
     private static View viewf;
     private ImageView imageView;
+    private String mCurrentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +90,7 @@ public class ScrollingActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(ScrollingActivity.this,
                 Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
+
             if (ActivityCompat.shouldShowRequestPermissionRationale(ScrollingActivity.this,
                     Manifest.permission.CAMERA)) {
                 ActivityCompat.requestPermissions(ScrollingActivity.this,
@@ -91,6 +100,7 @@ public class ScrollingActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(ScrollingActivity.this,
                         new String[]{Manifest.permission.CAMERA},
                         1);
+
             }
         } else {
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -110,14 +120,57 @@ public class ScrollingActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    Snackbar.make(viewf, "Tienes permiso", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                        startActivityForResult(takePictureIntent,2);
+                    }
+                    /*Snackbar.make(viewf, "Tienes permiso", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();*/
                 } else {
 
                     Snackbar.make(viewf, "Sin permiso papá es la ley", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
                 return;
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
         }
     }
