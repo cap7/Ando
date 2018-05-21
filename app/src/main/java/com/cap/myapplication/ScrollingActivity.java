@@ -13,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -30,6 +31,7 @@ public class ScrollingActivity extends AppCompatActivity {
     private static View viewf;
     private ImageView imageView;
     private String mCurrentPhotoPath;
+    static final int REQUEST_TAKE_PHOTO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +40,7 @@ public class ScrollingActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        imageView = findViewById(R.id.my_photo);
+        //imageView = findViewById(R.id.my_photo);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -46,12 +48,6 @@ public class ScrollingActivity extends AppCompatActivity {
             public void onClick(View view) {
                 viewf = view;
                 goPermission();
-                /*int permissionCheck = ContextCompat.checkSelfPermission(ScrollingActivity.this,
-                        Manifest.permission.CAMERA);*/
-
-
-                /*Snackbar.make(view, "Replace with your own action = " + permissionCheck, Snackbar.LENGTH_LONG)
-                      .setAction("Action", null).show();*/
             }
         });
     }
@@ -65,12 +61,7 @@ public class ScrollingActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -105,7 +96,7 @@ public class ScrollingActivity extends AppCompatActivity {
         } else {
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(takePictureIntent,2);
+                startActivityForResult(takePictureIntent,REQUEST_TAKE_PHOTO);
             }
         }
     }
@@ -119,15 +110,9 @@ public class ScrollingActivity extends AppCompatActivity {
             case 1: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dispatchTakePictureIntent();
 
-                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(takePictureIntent,2);
-                    }
-                    /*Snackbar.make(viewf, "Tienes permiso", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();*/
                 } else {
-
                     Snackbar.make(viewf, "Sin permiso papá es la ley", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
@@ -167,7 +152,7 @@ public class ScrollingActivity extends AppCompatActivity {
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
+                        "com.myaplication.photo.fileprovider",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
